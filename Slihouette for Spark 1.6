@@ -1,0 +1,28 @@
+from numpy.linalg import norm
+
+def euclidean_distance(v1, v2):
+    return norm(v1-v2)
+
+## Given the following RDDs:
+##     - vectors_rdd: (point_ID, point)
+##     - labels_rdd: (point_ID, cluster_ID)
+##     - centroids_rdd: (cluster_ID, centroid)
+
+# Collect() the centroids and broadcast
+
+centroids_labelled = sc.centroids_rdd.collect()
+centroids = sc.broadcast(centroids_labelled)
+
+# Join vectors_rdd and labels_rdd on point_ID.
+# (point_ID, (point, cluster_ID))
+
+predictedPoints_rdd = vectors_rdd.join(labels_rdd)
+
+# Compute Silhouette value for each point
+
+silhouette = predictedPoints.rdd.map(lambda x: (x[0], x[1][0], x[1][1], centroids.value[x[1][1]], euclidean_distance(x[1][0],centroids.value[x[1][1]][1]), min([euclidean_distance(x[1][0], point[1]) for point in [centroids.value[y[0]] for y in centroids.value if y[0]!=x[1][1]]]))).map(lambda x: (x[0], (x[5]-x[4])/max(x[4],x[5])))
+
+silhouette is and RDD whose elements are (POINT_ID, SILHOUETTE_VALUE)
+
+'''siluet = predictedPoints.rdd.
+map(lambda x: (x[0] (POINT_ID) , x[1][0] (POINT) , x[1][1] (CLUSTER_ID) , centroids.value[x[1][1]] (CLUSTER_ID_CENTROID_ID), euclidean_distance(x[1][0], centroids.value[x[1][1]][1]) (DISTANCE_BETWEEN_POINT_AND_CENTROID_OF_ASSIGNED_CLUSTER), min([euclidean_distance(x[1][0], point[1]) for point in [centroids.value[y[0]] for y in centroids.value if y[0]!=x[1][1]]]))) (DISTANCE_TO_THE_CLOSEST CLUSTER_ID_BUT_ASSIGNED) .map(lambda x: (x[0] (POINT_ID), (x[5]-x[4])/max(x[4],x[5]) POINT_SILHOUETTE_VALUE))'''
